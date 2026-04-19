@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Hamlaya rassemble des creations video, jeux de societe et jeux video."
+    />
+    <title>Hamlaya</title>
+    <link rel="preload" href="logo.png" as="image" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas class="frost-canvas" aria-hidden="true"></canvas>
+
+    <main class="page-shell">
+      <section class="brand-stage" aria-label="Hamlaya">
+        <div class="aurora" aria-hidden="true"></div>
+        <img class="brand-logo" src="logo.png" alt="Logo Hamlaya" />
+      </section>
+
+      <section class="projects" aria-label="Projets">
+        <a
+          class="project-tile"
+          href="https://kingdom.hamlaya.com"
+          aria-label="Ouvrir Kingdom Reforged"
+        >
+          <span class="project-kicker">Projet</span>
+          <strong>Kingdom Reforged</strong>
+          <span>Découvrir</span>
+        </a>
+        <div class="project-tile project-tile--muted" aria-label="Emplacement libre">
+          <span class="project-kicker">Bientôt</span>
+          <strong>Vidéo</strong>
+          <span>Formats courts, images, récits.</span>
+        </div>
+        <div class="project-tile project-tile--muted" aria-label="Emplacement libre">
+          <span class="project-kicker">Bientôt</span>
+          <strong>Jeux</strong>
+          <span>Plateau, numérique, prototypes.</span>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
