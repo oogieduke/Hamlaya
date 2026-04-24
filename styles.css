@@ -31,6 +31,7 @@ html {
 }
 
 body {
+  position: relative;
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
@@ -62,12 +63,16 @@ body::before {
   background-position: var(--field-x) var(--field-y);
   background-size: 72px 72px;
   mask-image: radial-gradient(circle at center, black, transparent 72%);
+  animation: grid-drift 42s ease-in-out infinite;
 }
 
 body::after {
   background:
+    radial-gradient(circle at 50% 10%, rgba(216, 195, 106, 0.08), transparent 48%),
+    radial-gradient(circle at 18% 88%, rgba(110, 141, 122, 0.09), transparent 44%),
     linear-gradient(to bottom, rgba(8, 9, 8, 0.12), rgba(8, 9, 8, 0.8)),
     radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.56));
+  animation: ambient-shift 18s ease-in-out infinite;
 }
 
 .frost-canvas {
@@ -78,7 +83,7 @@ body::after {
   height: 100%;
   pointer-events: none;
   mix-blend-mode: screen;
-  opacity: 0.42;
+  opacity: 0.55;
 }
 
 .page-shell {
@@ -119,6 +124,40 @@ body::after {
   z-index: -1;
 }
 
+.aurora::before,
+.aurora::after {
+  position: absolute;
+  inset: -12%;
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+
+.aurora::before {
+  background:
+    conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(216, 195, 106, 0) 0deg,
+      rgba(216, 195, 106, 0.18) 70deg,
+      rgba(199, 238, 231, 0.14) 160deg,
+      rgba(110, 141, 122, 0.12) 240deg,
+      rgba(216, 195, 106, 0) 360deg
+    );
+  filter: blur(28px);
+  opacity: 0.7;
+  animation: aurora-spin 32s linear infinite;
+}
+
+.aurora::after {
+  inset: 6%;
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(199, 238, 231, 0.22), transparent 58%),
+    radial-gradient(ellipse at 72% 60%, rgba(216, 195, 106, 0.18), transparent 55%);
+  filter: blur(22px);
+  mix-blend-mode: screen;
+  animation: aurora-swirl 14s ease-in-out infinite;
+}
+
 .brand-logo {
   width: min(82vw, 820px);
   max-height: 62vh;
@@ -133,6 +172,7 @@ body::after {
     rotateY(var(--logo-tilt-y));
   transform-style: preserve-3d;
   transition: transform 260ms ease-out;
+  animation: logo-float 11s ease-in-out infinite;
 }
 
 .projects {
@@ -239,8 +279,72 @@ body::after {
   }
 
   50% {
-    opacity: 0.9;
-    transform: translate3d(var(--aurora-x), calc(-1% + var(--aurora-y)), 0) scale(1.02);
+    opacity: 0.95;
+    transform: translate3d(var(--aurora-x), calc(-1% + var(--aurora-y)), 0) scale(1.03);
+  }
+}
+
+@keyframes aurora-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes aurora-swirl {
+  0%,
+  100% {
+    transform: translate3d(-2%, 1%, 0) scale(1);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translate3d(3%, -2%, 0) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes grid-drift {
+  0%,
+  100% {
+    background-position:
+      calc(var(--field-x) + 0px) calc(var(--field-y) + 0px),
+      calc(var(--field-x) + 0px) calc(var(--field-y) + 0px);
+  }
+
+  50% {
+    background-position:
+      calc(var(--field-x) + 36px) calc(var(--field-y) + 24px),
+      calc(var(--field-x) + 36px) calc(var(--field-y) + 24px);
+  }
+}
+
+@keyframes ambient-shift {
+  0%,
+  100% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+
+  50% {
+    filter: hue-rotate(-6deg) brightness(1.04);
+  }
+}
+
+@keyframes logo-float {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 34px 70px rgba(0, 0, 0, 0.68))
+      drop-shadow(0 0 34px rgba(216, 195, 106, 0.18));
+  }
+
+  50% {
+    filter:
+      drop-shadow(0 38px 74px rgba(0, 0, 0, 0.72))
+      drop-shadow(0 0 46px rgba(216, 195, 106, 0.28));
   }
 }
 
