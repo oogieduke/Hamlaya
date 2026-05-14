@@ -2,62 +2,954 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
-      content="Hamlaya rassemble des creations video, jeux de societe et jeux video."
+      content="Hamlaya — un monde noyé où seul l'Himalaya émerge encore."
     />
+    <meta name="theme-color" content="#0a0c10" />
     <title>Hamlaya</title>
-    <link rel="preload" href="logo.png" as="image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Inter:wght@300;400;500&display=swap"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <style>
+      :root {
+        --bg-deep: #05070a;
+        --bg-mid: #0a0d12;
+        --slate: #161a22;
+        --slate-2: #1f242e;
+        --copper: #a86a3b;
+        --copper-dim: #6b4424;
+        --foam: #d8d4cc;
+        --ink: #e8e3da;
+        --ink-dim: rgba(232, 227, 218, 0.55);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: var(--bg-deep);
+        color: var(--ink);
+        font-family: "Inter", system-ui, sans-serif;
+        font-weight: 300;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* === Scene container === */
+      .scene {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      .layer {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+        pointer-events: none;
+      }
+
+      /* === Sky === */
+      .sky {
+        background:
+          radial-gradient(
+            120% 70% at 25% 75%,
+            rgba(168, 106, 59, 0.18) 0%,
+            rgba(107, 68, 36, 0.08) 22%,
+            rgba(0, 0, 0, 0) 55%
+          ),
+          radial-gradient(
+            80% 60% at 75% 18%,
+            rgba(40, 30, 28, 0.55) 0%,
+            rgba(10, 12, 16, 0) 60%
+          ),
+          linear-gradient(
+            to bottom,
+            #060709 0%,
+            #0a0c12 30%,
+            #15161c 55%,
+            #1a1714 72%,
+            #1c1610 82%,
+            #14110c 92%,
+            #0b0a08 100%
+          );
+        z-index: 1;
+      }
+
+      /* === Cloud bands === */
+      .clouds {
+        z-index: 2;
+        opacity: 0.55;
+        mix-blend-mode: screen;
+        background:
+          radial-gradient(
+            60% 18% at 30% 30%,
+            rgba(70, 60, 55, 0.35),
+            transparent 70%
+          ),
+          radial-gradient(
+            50% 14% at 70% 22%,
+            rgba(90, 70, 55, 0.28),
+            transparent 70%
+          ),
+          radial-gradient(
+            70% 12% at 50% 40%,
+            rgba(50, 45, 42, 0.4),
+            transparent 75%
+          ),
+          radial-gradient(
+            40% 8% at 15% 48%,
+            rgba(60, 50, 45, 0.3),
+            transparent 70%
+          );
+        filter: blur(8px);
+      }
+
+      .clouds-2 {
+        z-index: 4;
+        opacity: 0.35;
+        mix-blend-mode: screen;
+        background:
+          radial-gradient(
+            50% 10% at 40% 55%,
+            rgba(120, 90, 70, 0.35),
+            transparent 70%
+          ),
+          radial-gradient(
+            45% 8% at 75% 50%,
+            rgba(100, 75, 58, 0.3),
+            transparent 70%
+          );
+        filter: blur(12px);
+      }
+
+      /* === Distant mountains (left horizon) === */
+      .distant {
+        z-index: 3;
+      }
+
+      .distant svg {
+        position: absolute;
+        left: -5%;
+        bottom: 35%;
+        width: 80%;
+        height: 18%;
+        opacity: 0.55;
+        filter: blur(0.5px);
+      }
+
+      /* === Mid mist band (over sea horizon) === */
+      .mist-far {
+        z-index: 5;
+        background: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0) 58%,
+          rgba(28, 25, 22, 0.55) 64%,
+          rgba(35, 30, 26, 0.4) 68%,
+          rgba(0, 0, 0, 0) 76%
+        );
+        filter: blur(6px);
+      }
+
+      /* === Sea canvas (Three.js) === */
+      #sea {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 50%;
+        z-index: 6;
+        display: block;
+      }
+
+      /* Static sea fallback (no WebGL) */
+      .sea-fallback {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 50%;
+        z-index: 6;
+        background:
+          repeating-linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.015) 0px,
+            rgba(255, 255, 255, 0.015) 1px,
+            transparent 1px,
+            transparent 4px
+          ),
+          linear-gradient(
+            to bottom,
+            #181a20 0%,
+            #0e1014 40%,
+            #06080a 100%
+          );
+        display: none;
+      }
+
+      .no-webgl #sea {
+        display: none;
+      }
+      .no-webgl .sea-fallback {
+        display: block;
+      }
+
+      /* === Main mountain === */
+      .mountain {
+        z-index: 7;
+      }
+
+      .mountain svg {
+        position: absolute;
+        right: -8%;
+        bottom: 30%;
+        width: 90%;
+        height: 75%;
+      }
+
+      /* === Near mist === */
+      .mist-near {
+        z-index: 8;
+        background: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0) 70%,
+          rgba(18, 16, 14, 0.35) 80%,
+          rgba(10, 8, 7, 0.3) 90%,
+          rgba(0, 0, 0, 0) 100%
+        );
+        filter: blur(4px);
+        opacity: 0.8;
+      }
+
+      /* === Particles (rain + snow) === */
+      #particles {
+        position: absolute;
+        inset: 0;
+        z-index: 9;
+        pointer-events: none;
+      }
+
+      /* === Vignette === */
+      .vignette {
+        z-index: 10;
+        background:
+          radial-gradient(
+            120% 90% at 50% 50%,
+            transparent 55%,
+            rgba(0, 0, 0, 0.35) 85%,
+            rgba(0, 0, 0, 0.7) 100%
+          );
+      }
+
+      /* === Grain === */
+      .grain {
+        z-index: 11;
+        opacity: 0.06;
+        mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+      }
+
+      /* === Title card === */
+      .title-card {
+        position: absolute;
+        z-index: 12;
+        top: 50%;
+        left: 32%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        padding: 38px 54px 32px;
+        border-radius: 2px;
+        background: rgba(20, 20, 24, 0.18);
+        backdrop-filter: blur(14px) saturate(110%);
+        -webkit-backdrop-filter: blur(14px) saturate(110%);
+        border: 0.5px solid rgba(255, 255, 255, 0.08);
+        box-shadow:
+          0 30px 80px rgba(0, 0, 0, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        animation: fade-in 2.4s ease-out 0.3s both;
+        pointer-events: none;
+      }
+
+      .title-card h1 {
+        font-family: "Fraunces", "Times New Roman", serif;
+        font-weight: 300;
+        font-variation-settings: "opsz" 144;
+        font-size: clamp(3.2rem, 9vw, 6.4rem);
+        letter-spacing: 0.04em;
+        margin: 0;
+        line-height: 0.95;
+        color: var(--ink);
+        text-shadow:
+          0 2px 24px rgba(0, 0, 0, 0.6),
+          0 0 60px rgba(168, 106, 59, 0.12);
+      }
+
+      .title-card .baseline {
+        margin: 18px 0 0;
+        font-family: "Inter", sans-serif;
+        font-weight: 300;
+        font-size: clamp(0.7rem, 1.05vw, 0.82rem);
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+      }
+
+      .title-card .baseline::before,
+      .title-card .baseline::after {
+        content: "";
+        display: inline-block;
+        width: 24px;
+        height: 1px;
+        background: rgba(232, 227, 218, 0.3);
+        vertical-align: middle;
+        margin: 0 14px;
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+          transform: translate(-50%, calc(-50% + 12px));
+          filter: blur(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%);
+          filter: blur(0);
+        }
+      }
+
+      /* === Responsive: vertical / mobile === */
+      @media (max-aspect-ratio: 4/5) {
+        .mountain svg {
+          right: -25%;
+          width: 140%;
+          height: 60%;
+          bottom: 38%;
+        }
+        .distant svg {
+          width: 110%;
+          bottom: 42%;
+        }
+        #sea {
+          height: 42%;
+        }
+        .sea-fallback {
+          height: 42%;
+        }
+        .title-card {
+          left: 50%;
+          top: 38%;
+          padding: 28px 32px 24px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .title-card {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <canvas class="frost-canvas" aria-hidden="true"></canvas>
+    <div class="scene" id="scene">
+      <div class="layer sky" data-depth="0"></div>
+      <div class="layer clouds" data-depth="3"></div>
+      <div class="layer distant" data-depth="6">
+        <svg viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="distantGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1a1715" />
+              <stop offset="55%" stop-color="#0e0d10" />
+              <stop offset="100%" stop-color="#06070a" />
+            </linearGradient>
+          </defs>
+          <path
+            fill="url(#distantGrad)"
+            d="M0,200 L0,150 L40,135 L70,142 L95,118 L125,128 L160,95 L195,110 L225,82 L255,98 L290,72 L325,90 L360,68 L400,82 L440,55 L480,72 L520,62 L555,88 L590,76 L630,98 L665,90 L705,108 L740,100 L780,122 L815,115 L855,132 L900,125 L945,142 L1000,138 L1000,200 Z"
+          />
+        </svg>
+      </div>
+      <div class="layer mist-far" data-depth="2"></div>
+      <div class="layer clouds-2" data-depth="4"></div>
 
-    <main class="page-shell">
-      <section class="brand-stage" aria-label="Hamlaya">
-        <div class="aurora" aria-hidden="true"></div>
-        <img class="brand-logo" src="logo.png" alt="Logo Hamlaya" />
-        <p class="brand-tagline">Studio &middot; Jeux &middot; Créations</p>
-      </section>
+      <canvas id="sea" aria-hidden="true"></canvas>
+      <div class="sea-fallback" aria-hidden="true"></div>
 
-      <section class="projects" aria-label="Projets">
-        <a
-          class="project-tile project-tile--gold"
-          href="https://kingdom.hamlaya.com"
-          aria-label="Ouvrir Kingdom Reforged"
-        >
-          <span class="project-kicker">Projet</span>
-          <strong>Kingdom Reforged</strong>
-          <span>Editor</span>
-        </a>
-        <a
-          class="project-tile project-tile--ice"
-          href="https://exp.hamlaya.com"
-          aria-label="Ouvrir Kingdom Expeditions"
-        >
-          <span class="project-kicker">Prototype</span>
-          <strong>Kingdom Expeditions</strong>
-          <span>Game</span>
-        </a>
-        <a
-          class="project-tile project-tile--rose"
-          href="https://crush.hamlaya.com"
-          aria-label="Ouvrir Crush"
-        >
-          <span class="project-kicker">Jeu</span>
-          <strong>Crush</strong>
-          <span>Clone Candy Crush</span>
-        </a>
-      </section>
-    </main>
+      <div class="layer mountain" data-depth="10">
+        <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="mountFace" x1="0.2" y1="0" x2="0.8" y2="1">
+              <stop offset="0%" stop-color="#262019" />
+              <stop offset="35%" stop-color="#1a1612" />
+              <stop offset="100%" stop-color="#080706" />
+            </linearGradient>
+            <linearGradient id="mountLit" x1="0" y1="0" x2="1" y2="0.6">
+              <stop offset="0%" stop-color="rgba(168, 106, 59, 0.0)" />
+              <stop offset="55%" stop-color="rgba(168, 106, 59, 0.0)" />
+              <stop offset="78%" stop-color="rgba(186, 122, 70, 0.55)" />
+              <stop offset="100%" stop-color="rgba(120, 76, 42, 0.0)" />
+            </linearGradient>
+            <linearGradient id="snowGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#d6d2c8" />
+              <stop offset="100%" stop-color="#6e6a62" />
+            </linearGradient>
+            <filter id="softEdge" x="-2%" y="-2%" width="104%" height="104%">
+              <feGaussianBlur stdDeviation="0.6" />
+            </filter>
+          </defs>
 
-    <script src="script.js"></script>
+          <!-- Main massif silhouette: anchored bottom-right -->
+          <path
+            fill="url(#mountFace)"
+            filter="url(#softEdge)"
+            d="
+              M1000,1000
+              L1000,160
+              L965,205
+              L945,178
+              L918,232
+              L892,210
+              L862,260
+              L832,235
+              L800,295
+              L772,270
+              L740,330
+              L716,310
+              L690,345
+              L668,328
+              L642,378
+              L618,360
+              L590,402
+              L562,388
+              L535,432
+              L508,418
+              L478,460
+              L452,450
+              L422,490
+              L398,478
+              L368,510
+              L342,505
+              L312,540
+              L288,532
+              L260,562
+              L235,558
+              L208,588
+              L185,585
+              L160,615
+              L138,612
+              L118,635
+              L100,640
+              L82,660
+              L65,665
+              L50,685
+              L1000,1000 Z
+            "
+          />
+
+          <!-- Lit copper accent on ridge -->
+          <path
+            fill="url(#mountLit)"
+            opacity="0.85"
+            d="
+              M1000,160
+              L965,205
+              L945,178
+              L918,232
+              L892,210
+              L862,260
+              L832,235
+              L800,295
+              L772,270
+              L740,330
+              L716,310
+              L690,345
+              L668,328
+              L642,378
+              L618,360
+              L590,402
+              L562,388
+              L535,432
+              L508,418
+              L478,460
+              L452,450
+              L422,490
+              L398,478
+              L368,510
+              L1000,510
+              Z
+            "
+          />
+
+          <!-- Snow cap -->
+          <path
+            fill="url(#snowGrad)"
+            opacity="0.92"
+            d="
+              M1000,160
+              L965,205
+              L945,178
+              L918,232
+              L892,210
+              L862,260
+              L832,235
+              L800,295
+              L772,270
+              L740,330
+              L716,310
+              L1000,310
+              Z
+            "
+          />
+
+          <!-- Snow speckle (residual patches lower) -->
+          <path
+            fill="#cfcbc1"
+            opacity="0.5"
+            d="
+              M690,345 L668,328 L645,360 L632,372 L618,360 L605,388
+              L595,398 L585,395 L580,408 L572,406 L568,418
+              L555,420 L548,432 L535,432 L530,440 L522,438
+              L515,452 L508,418 Z
+            "
+          />
+
+          <!-- Cast ambient cool shadow near base -->
+          <path
+            fill="rgba(8, 9, 12, 0.55)"
+            d="
+              M50,685 L1000,685 L1000,1000 L50,1000 Z
+            "
+          />
+        </svg>
+      </div>
+
+      <div class="layer mist-near" data-depth="5"></div>
+      <canvas id="particles" aria-hidden="true"></canvas>
+      <div class="layer vignette" data-depth="0"></div>
+      <div class="layer grain" data-depth="0"></div>
+
+      <div class="title-card">
+        <h1>Hamlaya</h1>
+        <p class="baseline">le dernier rivage</p>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        // ============================================================
+        // State
+        // ============================================================
+        const scene = document.getElementById("scene");
+        const layers = Array.from(document.querySelectorAll(".layer"));
+        const mouse = { x: 0, y: 0, tx: 0, ty: 0 }; // -1..1, smoothed
+        let viewportW = window.innerWidth;
+        let viewportH = window.innerHeight;
+        const reduceMotion =
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        function onResize() {
+          viewportW = window.innerWidth;
+          viewportH = window.innerHeight;
+        }
+        window.addEventListener("resize", onResize);
+
+        // Smoothed mouse via rAF (no expensive work per move event)
+        function onPointer(clientX, clientY) {
+          mouse.tx = (clientX / viewportW) * 2 - 1;
+          mouse.ty = (clientY / viewportH) * 2 - 1;
+        }
+        window.addEventListener(
+          "mousemove",
+          (e) => onPointer(e.clientX, e.clientY),
+          { passive: true }
+        );
+        window.addEventListener(
+          "touchmove",
+          (e) => {
+            if (e.touches && e.touches[0]) {
+              onPointer(e.touches[0].clientX, e.touches[0].clientY);
+            }
+          },
+          { passive: true }
+        );
+
+        // ============================================================
+        // Sea (Three.js + GLSL)
+        // ============================================================
+        const seaCanvas = document.getElementById("sea");
+        let renderer = null;
+        let seaScene, seaCamera, seaMesh, seaUniforms;
+        let webglOk = false;
+
+        try {
+          renderer = new THREE.WebGLRenderer({
+            canvas: seaCanvas,
+            antialias: false,
+            alpha: true,
+            powerPreference: "low-power",
+          });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+          webglOk = true;
+        } catch (e) {
+          webglOk = false;
+        }
+
+        if (!webglOk || !renderer) {
+          document.body.classList.add("no-webgl");
+        } else {
+          seaScene = new THREE.Scene();
+          seaCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+          seaUniforms = {
+            uTime: { value: 0 },
+            uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+            uRipple: { value: new THREE.Vector3(0, 0, 0) }, // x,y,strength
+            uAspect: { value: 1 },
+          };
+
+          const vertSrc = `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = vec4(position.xy, 0.0, 1.0);
+            }
+          `;
+
+          const fragSrc = `
+            precision highp float;
+            varying vec2 vUv;
+            uniform float uTime;
+            uniform vec2 uMouse;
+            uniform vec3 uRipple;
+            uniform float uAspect;
+
+            // hash + value noise
+            float hash(vec2 p) {
+              return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+            }
+            float vnoise(vec2 p) {
+              vec2 i = floor(p);
+              vec2 f = fract(p);
+              float a = hash(i);
+              float b = hash(i + vec2(1.0, 0.0));
+              float c = hash(i + vec2(0.0, 1.0));
+              float d = hash(i + vec2(1.0, 1.0));
+              vec2 u = f * f * (3.0 - 2.0 * f);
+              return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+            }
+            float fbm(vec2 p) {
+              float v = 0.0;
+              float a = 0.5;
+              for (int i = 0; i < 4; i++) {
+                v += a * vnoise(p);
+                p *= 2.03;
+                a *= 0.5;
+              }
+              return v;
+            }
+
+            void main() {
+              vec2 uv = vUv;
+              // perspective: y=0 (bottom of canvas) is foreground, y=1 (top) is horizon
+              float depth = 1.0 - uv.y; // 0 at horizon, 1 at foreground
+              float persp = pow(depth, 1.4);
+
+              // anisotropic stretching as we approach horizon
+              vec2 wuv = vec2(
+                uv.x * (3.0 + 14.0 * (1.0 - depth)),
+                (1.0 - depth) * 28.0 + uv.y * 4.0
+              );
+
+              float t = uTime * 0.35;
+
+              // Wave layers
+              float w = 0.0;
+              w += sin(wuv.x * 1.4 + t * 1.6 + wuv.y * 0.5) * 0.55;
+              w += sin(wuv.x * 2.6 - t * 2.1 + wuv.y * 0.9) * 0.32;
+              w += sin(wuv.x * 5.1 + t * 1.2 + wuv.y * 1.6) * 0.18;
+              w += fbm(wuv * 0.6 + vec2(t * 0.4, t * 0.2)) * 0.7;
+
+              // wind direction influenced by mouse
+              vec2 wind = (uMouse - 0.5) * 0.4;
+              w += fbm(wuv * 1.4 + wind * 5.0 + t * 0.8) * 0.35;
+
+              // mouse ripple (in canvas-local uv)
+              vec2 mUv = uMouse;
+              float aspectFix = uAspect;
+              vec2 d2 = uv - mUv;
+              d2.x *= aspectFix;
+              float r = length(d2);
+              float ripple =
+                sin(r * 38.0 - uTime * 6.5) *
+                exp(-r * 6.0) *
+                uRipple.z;
+              w += ripple * 0.55;
+
+              // base sea colors
+              vec3 deep = vec3(0.025, 0.030, 0.042);
+              vec3 mid  = vec3(0.075, 0.082, 0.098);
+              vec3 shallow = vec3(0.13, 0.12, 0.13);
+              vec3 col = mix(deep, mid, persp);
+              col = mix(col, shallow, persp * 0.4);
+
+              // horizon haze (warm copper-ish band)
+              vec3 horizonHaze = vec3(0.20, 0.14, 0.10);
+              col = mix(horizonHaze, col, smoothstep(0.0, 0.18, depth));
+
+              // crest foam: bright on positive crests where perspective is strong
+              float crest = smoothstep(0.55, 0.95, w * persp + vnoise(wuv * 3.0 + t) * 0.25);
+              vec3 foam = vec3(0.78, 0.76, 0.71);
+              col = mix(col, foam, crest * (0.45 + 0.35 * persp));
+
+              // dark troughs
+              float trough = smoothstep(0.6, 0.0, w + 0.4);
+              col *= (1.0 - trough * 0.25);
+
+              // subtle copper sheen on far field (reflecting sky)
+              float sheen = smoothstep(0.0, 0.5, 1.0 - depth) * (0.5 + 0.5 * sin(uv.x * 12.0 + t));
+              col += vec3(0.12, 0.07, 0.04) * sheen * 0.18;
+
+              // soft top fade (blends into mist/horizon)
+              float topFade = smoothstep(0.85, 1.0, uv.y);
+              col = mix(col, vec3(0.10, 0.08, 0.07), topFade * 0.85);
+
+              // soft bottom darken for vignette
+              col *= 0.85 + 0.15 * smoothstep(0.0, 0.4, depth);
+
+              gl_FragColor = vec4(col, 1.0);
+            }
+          `;
+
+          const geo = new THREE.PlaneGeometry(2, 2);
+          const mat = new THREE.ShaderMaterial({
+            uniforms: seaUniforms,
+            vertexShader: vertSrc,
+            fragmentShader: fragSrc,
+          });
+          seaMesh = new THREE.Mesh(geo, mat);
+          seaScene.add(seaMesh);
+
+          function resizeSea() {
+            const rect = seaCanvas.getBoundingClientRect();
+            renderer.setSize(rect.width, rect.height, false);
+            seaUniforms.uAspect.value = rect.width / Math.max(rect.height, 1);
+          }
+          resizeSea();
+          window.addEventListener("resize", resizeSea);
+        }
+
+        // ============================================================
+        // Particles (rain + snow) on 2D canvas
+        // ============================================================
+        const pCanvas = document.getElementById("particles");
+        const pCtx = pCanvas.getContext("2d");
+        let dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+
+        function resizeParticles() {
+          dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+          pCanvas.width = viewportW * dpr;
+          pCanvas.height = viewportH * dpr;
+          pCanvas.style.width = viewportW + "px";
+          pCanvas.style.height = viewportH + "px";
+          pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+        resizeParticles();
+        window.addEventListener("resize", resizeParticles);
+
+        // Snow lives in upper region (over mountain summit area)
+        // Rain lives in lower region (over sea)
+        const SNOW_COUNT = reduceMotion ? 0 : 90;
+        const RAIN_COUNT = reduceMotion ? 0 : 180;
+
+        const snow = [];
+        const rain = [];
+
+        function initParticles() {
+          snow.length = 0;
+          rain.length = 0;
+          for (let i = 0; i < SNOW_COUNT; i++) {
+            snow.push({
+              x: Math.random() * viewportW,
+              y: Math.random() * viewportH * 0.5,
+              r: 0.6 + Math.random() * 1.6,
+              vy: 0.12 + Math.random() * 0.35,
+              vx: -0.05 + Math.random() * 0.1,
+              o: 0.25 + Math.random() * 0.55,
+              s: Math.random() * Math.PI * 2,
+            });
+          }
+          for (let i = 0; i < RAIN_COUNT; i++) {
+            rain.push({
+              x: Math.random() * viewportW,
+              y: viewportH * 0.4 + Math.random() * viewportH * 0.6,
+              len: 6 + Math.random() * 14,
+              vy: 5 + Math.random() * 7,
+              vx: 0,
+              o: 0.18 + Math.random() * 0.35,
+            });
+          }
+        }
+        initParticles();
+        window.addEventListener("resize", initParticles);
+
+        // ============================================================
+        // Animation loop
+        // ============================================================
+        let last = performance.now();
+        let rippleStrength = 0;
+        let rippleX = 0.5;
+        let rippleY = 0.5;
+        let mouseInSea = false;
+        let lastSeaMouseTime = 0;
+
+        function loop(now) {
+          const dt = Math.min(50, now - last) / 16.6667; // frames since last
+          last = now;
+          const t = now * 0.001;
+
+          // Smooth mouse
+          mouse.x += (mouse.tx - mouse.x) * 0.06;
+          mouse.y += (mouse.ty - mouse.y) * 0.06;
+
+          // Parallax: each layer translates per data-depth
+          for (const el of layers) {
+            const depth = parseFloat(el.getAttribute("data-depth")) || 0;
+            const tx = -mouse.x * depth;
+            const ty = -mouse.y * depth * 0.6;
+            el.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+          }
+          // Sea + particles need slight parallax too
+          seaCanvas.style.transform = `translate3d(${-mouse.x * 4}px, ${-mouse.y * 2}px, 0)`;
+
+          // Title card: subtle counter-parallax
+          const card = document.querySelector(".title-card");
+          if (card) {
+            card.style.setProperty(
+              "transform",
+              `translate(-50%, -50%) translate3d(${mouse.x * 2}px, ${mouse.y * 1}px, 0)`
+            );
+          }
+
+          // Sea rendering
+          if (webglOk && renderer) {
+            seaUniforms.uTime.value = t;
+
+            // Convert global mouse to sea-canvas local UV
+            const rect = seaCanvas.getBoundingClientRect();
+            // We don't have last mouse client coord stored other than normalized;
+            // re-derive from normalized coords
+            const cx = ((mouse.tx + 1) * 0.5) * viewportW;
+            const cy = ((mouse.ty + 1) * 0.5) * viewportH;
+            const localX = (cx - rect.left) / rect.width;
+            const localY = 1 - (cy - rect.top) / rect.height;
+            const inside =
+              localX >= 0 && localX <= 1 && localY >= 0 && localY <= 1;
+
+            if (inside) {
+              if (!mouseInSea) {
+                mouseInSea = true;
+              }
+              // Track and gently strengthen ripple as mouse moves
+              const dx = localX - rippleX;
+              const dy = localY - rippleY;
+              const moved = Math.sqrt(dx * dx + dy * dy);
+              rippleX = localX;
+              rippleY = localY;
+              rippleStrength += Math.min(0.9, moved * 8);
+              if (moved > 0.001) lastSeaMouseTime = now;
+            } else {
+              mouseInSea = false;
+            }
+            // Decay
+            rippleStrength *= 0.94;
+
+            seaUniforms.uMouse.value.set(rippleX, rippleY);
+            seaUniforms.uRipple.value.set(rippleX, rippleY, rippleStrength);
+
+            renderer.render(seaScene, seaCamera);
+          }
+
+          // Particles
+          pCtx.clearRect(0, 0, viewportW, viewportH);
+
+          // Wind tied to mouse x
+          const wind = mouse.x * 0.8;
+
+          // Snow (top half over mountain area, fade out near horizon line ~50%)
+          pCtx.save();
+          for (let i = 0; i < snow.length; i++) {
+            const p = snow[i];
+            p.s += 0.01 * dt;
+            p.x += (p.vx + wind * 0.3 + Math.sin(p.s) * 0.15) * dt;
+            p.y += p.vy * dt;
+            if (p.y > viewportH * 0.55) {
+              p.y = -4;
+              p.x = Math.random() * viewportW;
+            }
+            if (p.x < -10) p.x = viewportW + 10;
+            if (p.x > viewportW + 10) p.x = -10;
+            // fade out near snow/rain boundary
+            const fade =
+              1 - Math.max(0, (p.y - viewportH * 0.35) / (viewportH * 0.2));
+            pCtx.globalAlpha = p.o * Math.max(0, fade);
+            pCtx.fillStyle = "#e8e3da";
+            pCtx.beginPath();
+            pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            pCtx.fill();
+          }
+          pCtx.restore();
+
+          // Rain (bottom half over sea, slightly tilted by wind)
+          pCtx.save();
+          pCtx.strokeStyle = "rgba(190, 195, 205, 1)";
+          pCtx.lineWidth = 0.9;
+          pCtx.lineCap = "round";
+          const tilt = wind * 4 + 1.5;
+          for (let i = 0; i < rain.length; i++) {
+            const p = rain[i];
+            p.x += tilt * 0.6 * dt;
+            p.y += p.vy * dt;
+            if (p.y > viewportH + 20) {
+              p.y = viewportH * 0.4 + Math.random() * 40;
+              p.x = Math.random() * viewportW;
+            }
+            if (p.x < -20) p.x = viewportW + 20;
+            if (p.x > viewportW + 20) p.x = -20;
+            // fade out near top of rain zone
+            const fadeTop =
+              1 - Math.max(0, (viewportH * 0.5 - p.y) / (viewportH * 0.1));
+            pCtx.globalAlpha = p.o * Math.max(0, fadeTop);
+            pCtx.beginPath();
+            pCtx.moveTo(p.x, p.y);
+            pCtx.lineTo(p.x - tilt * 0.4, p.y - p.len);
+            pCtx.stroke();
+          }
+          pCtx.restore();
+
+          requestAnimationFrame(loop);
+        }
+
+        requestAnimationFrame(loop);
+      })();
+    </script>
   </body>
 </html>
