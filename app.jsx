@@ -215,9 +215,109 @@ function TopNav({ onAbout }) {
   );
 }
 
-// ── Hero with logo (which already contains the wordmark). Entry animation
-// is a circular reveal + ping ring; once revealed, the logo gently follows
-// the cursor in a parallax-like motion.
+// ── Hamlaya logo, vector. Inline so the page-loaded Outfit font applies
+// to the wordmark and we get no JPEG artefacts. Composition: thin gold
+// crescent halo above a jagged mountain range with snow caps, gold water
+// reflection streaks, "hamlaya" wordmark, and a small gold dot ornament.
+function HamlayaLogo() {
+  return (
+    <svg
+      viewBox="0 0 1536 1024"
+      xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid meet"
+      aria-label="Hamlaya"
+    >
+      <defs>
+        <linearGradient id="hl-moon" x1="25%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0" stopColor="#f7dca0" stopOpacity="0" />
+          <stop offset="0.12" stopColor="#f7dca0" stopOpacity="0.95" />
+          <stop offset="0.5" stopColor="#e1b264" stopOpacity="1" />
+          <stop offset="0.85" stopColor="#a07028" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#a07028" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="hl-mountain" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1c2440" />
+          <stop offset="0.55" stopColor="#0e152a" />
+          <stop offset="1" stopColor="#070b18" />
+        </linearGradient>
+        <linearGradient id="hl-snow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fffbef" />
+          <stop offset="1" stopColor="#cdc6b1" />
+        </linearGradient>
+        <radialGradient id="hl-water" cx="50%" cy="50%" r="50%">
+          <stop offset="0" stopColor="#f0c87a" stopOpacity="0.95" />
+          <stop offset="1" stopColor="#f0c87a" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="hl-snow-ref" cx="50%" cy="50%" r="50%">
+          <stop offset="0" stopColor="#fff5dc" stopOpacity="0.5" />
+          <stop offset="1" stopColor="#fff5dc" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* Crescent moon halo, open at the bottom (gap from ~5 to ~7 o'clock) */}
+      <path
+        d="M 644 603 A 248 248 0 1 0 892 603"
+        fill="none"
+        stroke="url(#hl-moon)"
+        strokeWidth="22"
+        strokeLinecap="round"
+      />
+      {/* Inner highlight on the moon arc */}
+      <path
+        d="M 660 580 A 232 232 0 1 0 876 580"
+        fill="none"
+        stroke="#f4d68a"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
+
+      {/* Mountain silhouette — jagged multi-peak range */}
+      <path
+        d="M 240 668 L 310 600 L 360 618 L 430 545 L 490 585 L 545 515 L 600 550 L 655 478 L 715 312 L 762 400 L 810 358 L 855 432 L 900 388 L 950 452 L 1005 414 L 1060 478 L 1115 510 L 1170 558 L 1230 606 L 1296 668 Z"
+        fill="url(#hl-mountain)"
+      />
+
+      {/* Snow caps on the tallest peaks */}
+      <path d="M 695 360 L 715 312 L 735 360 L 723 365 L 715 355 L 706 365 Z" fill="url(#hl-snow)" />
+      <path d="M 795 388 L 810 358 L 825 388 L 815 392 L 810 386 L 805 392 Z" fill="url(#hl-snow)" />
+      <path d="M 888 412 L 900 388 L 912 412 Z" fill="url(#hl-snow)" opacity="0.85" />
+      <path d="M 750 425 L 762 400 L 774 425 Z" fill="url(#hl-snow)" opacity="0.78" />
+      <path d="M 645 502 L 655 478 L 668 504 Z" fill="url(#hl-snow)" opacity="0.6" />
+
+      {/* Water reflection streaks */}
+      <ellipse cx="768" cy="678" rx="120" ry="3" fill="url(#hl-water)" />
+      <ellipse cx="768" cy="694" rx="200" ry="2" fill="url(#hl-water)" opacity="0.85" />
+      <ellipse cx="768" cy="712" rx="275" ry="1.6" fill="url(#hl-water)" opacity="0.7" />
+      <ellipse cx="768" cy="730" rx="180" ry="1.4" fill="url(#hl-water)" opacity="0.55" />
+      <ellipse cx="720" cy="700" rx="80" ry="1.2" fill="url(#hl-snow-ref)" opacity="0.45" />
+
+      {/* Wordmark */}
+      <text
+        x="768"
+        y="888"
+        textAnchor="middle"
+        fill="#c0c8d4"
+        fontFamily="Outfit, 'Helvetica Neue', sans-serif"
+        fontWeight="200"
+        fontSize="118"
+        letterSpacing="20"
+      >
+        hamlaya
+      </text>
+
+      {/* Bottom ornament: small gold dot flanked by hairlines */}
+      <g transform="translate(768 952)">
+        <line x1="-95" y1="0" x2="-12" y2="0" stroke="#d4a04c" strokeWidth="0.5" opacity="0.7" />
+        <line x1="12" y1="0" x2="95" y2="0" stroke="#d4a04c" strokeWidth="0.5" opacity="0.7" />
+        <circle r="3.2" fill="#d4a04c" opacity="0.85" />
+      </g>
+    </svg>
+  );
+}
+
+// ── Hero with logo (which already contains the wordmark). Once revealed,
+// the logo gently follows the cursor in a parallax-like motion.
 function Hero() {
   const followRef = React.useRef(null);
   React.useEffect(() => {
@@ -253,7 +353,7 @@ function Hero() {
       <div className="hero-glyph" data-cursor="link">
         <div className="hero-glyph-follow" ref={followRef}>
           <div className="hero-glyph-mask">
-            <img src="logo.png" alt="Hamlaya — mountain and moon" />
+            <HamlayaLogo />
           </div>
         </div>
       </div>
