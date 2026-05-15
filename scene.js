@@ -114,24 +114,91 @@
 
       for (const p of projects) {
         const color = new THREE.Color(p.color || '#e2b86c');
-        // Core dot — we still create the mesh because the constellation lines
-        // and the HTML overlay both anchor to its position, but it's invisible:
-        // the HTML disc renders the actual dot so the hover-expansion looks
-        // like one continuous shape growing out of the same circle.
-        const geo = new THREE.SphereGeometry(0.07 * (p.size || 1), 24, 16);
-        const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1 });
+        // Glass body sphere — ethereal: transparent core, fresnel rim, animated
+        // noise drifting inside. The HTML bubble overlays it for the hover menu.
+        const geo = new THREE.SphereGeometry(0.18 * (p.size || 1), 48, 32);
+        const mat = new THREE.ShaderMaterial({
+          uniforms: {
+            u_color: { value: color.clone() },
+            u_time: { value: 0 },
+            u_hover: { value: 0 },
+          },
+          vertexShader: `
+            varying vec3 vNormal;
+            varying vec3 vView;
+            varying vec3 vPos;
+            void main() {
+              vNormal = normalize(normalMatrix * normal);
+              vec4 mv = modelViewMatrix * vec4(position, 1.0);
+              vView = normalize(-mv.xyz);
+              vPos = position;
+              gl_Position = projectionMatrix * mv;
+            }
+          `,
+          fragmentShader: `
+            varying vec3 vNormal;
+            varying vec3 vView;
+            varying vec3 vPos;
+            uniform vec3 u_color;
+            uniform float u_time;
+            uniform float u_hover;
+
+            float hash(vec3 p) {
+              return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+            }
+            float vnoise(vec3 p) {
+              vec3 i = floor(p);
+              vec3 f = fract(p);
+              f = f * f * (3.0 - 2.0 * f);
+              float n000 = hash(i);
+              float n100 = hash(i + vec3(1.0, 0.0, 0.0));
+              float n010 = hash(i + vec3(0.0, 1.0, 0.0));
+              float n110 = hash(i + vec3(1.0, 1.0, 0.0));
+              float n001 = hash(i + vec3(0.0, 0.0, 1.0));
+              float n101 = hash(i + vec3(1.0, 0.0, 1.0));
+              float n011 = hash(i + vec3(0.0, 1.0, 1.0));
+              float n111 = hash(i + vec3(1.0, 1.0, 1.0));
+              return mix(
+                mix(mix(n000, n100, f.x), mix(n010, n110, f.x), f.y),
+                mix(mix(n001, n101, f.x), mix(n011, n111, f.x), f.y),
+                f.z);
+            }
+
+            void main() {
+              // Fresnel rim — strong at glancing angles, fades to transparent in the middle.
+              float ndv = max(dot(vNormal, vView), 0.0);
+              float fres = pow(1.0 - ndv, 2.4);
+
+              // Animated cloud inside the sphere — drifts slowly, gives "ether" feel.
+              vec3 q = vPos * 3.2 + vec3(u_time * 0.18, u_time * 0.13, u_time * 0.09);
+              float n = vnoise(q) * 0.6 + vnoise(q * 2.1) * 0.3 + vnoise(q * 4.3) * 0.15;
+              n = smoothstep(0.35, 0.85, n);
+
+              // Inner luminance: brighter at the center, modulated by the cloud.
+              float inner = (1.0 - fres) * (0.18 + n * 0.55);
+
+              vec3 col = u_color * (0.55 + fres * 1.8 + inner * 1.4) + vec3(n * 0.04);
+              float alpha = fres * (0.72 + u_hover * 0.25) + inner * 0.55;
+              alpha = clamp(alpha, 0.0, 0.94);
+
+              gl_FragColor = vec4(col, alpha);
+            }
+          `,
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
-        mesh.visible = false;
         mesh.userData = { project: p, basePos: mesh.position.clone(), phase: Math.random() * Math.PI * 2 };
         this.constellation.add(mesh);
 
-        // Glow halo — back-facing sphere with additive material.
-        const glowGeo = new THREE.SphereGeometry(0.28 * (p.size || 1), 24, 16);
+        // Soft outer halo — back-facing fresnel sphere for the bloom-around-it look.
+        const glowGeo = new THREE.SphereGeometry(0.55 * (p.size || 1), 32, 20);
         const glowMat = new THREE.ShaderMaterial({
           uniforms: {
             u_color: { value: color.clone() },
-            u_intensity: { value: 0.55 },
+            u_intensity: { value: 0.38 },
             u_hover: { value: 0 },
           },
           vertexShader: `
@@ -151,9 +218,9 @@
             uniform float u_intensity;
             uniform float u_hover;
             void main() {
-              float fres = pow(1.0 - max(dot(vNormal, vView), 0.0), 2.5);
-              float a = fres * (u_intensity + u_hover * 0.6);
-              gl_FragColor = vec4(u_color * (1.0 + u_hover * 0.6), a);
+              float fres = pow(1.0 - max(dot(vNormal, vView), 0.0), 3.2);
+              float a = fres * (u_intensity + u_hover * 0.55);
+              gl_FragColor = vec4(u_color * (1.0 + u_hover * 0.5), a);
             }
           `,
           transparent: true,
@@ -338,12 +405,15 @@
         n.mesh.position.set(base.x + sway, base.y + bob, base.z);
         n.glow.position.copy(n.mesh.position);
 
+        n.mesh.material.uniforms.u_time.value = t + ph;
+
         const want = (hoveredId === n.project.id) ? 1 : 0;
         n.hover += (want - n.hover) * 0.12;
         const s = 1 + n.hover * 0.6;
         n.mesh.scale.setScalar(s);
         n.glow.scale.setScalar(1 + n.hover * 0.4);
         n.glow.material.uniforms.u_hover.value = n.hover;
+        n.mesh.material.uniforms.u_hover.value = n.hover;
       }
 
       // Render: background first (no depth), then constellation.

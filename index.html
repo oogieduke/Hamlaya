@@ -262,6 +262,8 @@
       pointer-events: auto;
     }
     .node-bubble-disc {
+      /* At rest, invisible — the 3D glass sphere in the WebGL scene is the
+         visible node. On hover, this disc expands into the menu container. */
       position: absolute;
       top: 50%; left: 50%;
       width: var(--rest-size);
@@ -269,11 +271,9 @@
       margin-left: calc(var(--rest-size) / -2);
       margin-top: calc(var(--rest-size) / -2);
       border-radius: 50%;
-      background: var(--node-color, #d4a04c);
+      background: transparent;
       border: 0.5px solid transparent;
-      box-shadow:
-        0 0 14px color-mix(in srgb, var(--node-color, #d4a04c) 70%, transparent),
-        0 0 36px color-mix(in srgb, var(--node-color, #d4a04c) 35%, transparent);
+      box-shadow: none;
       backdrop-filter: blur(0);
       -webkit-backdrop-filter: blur(0);
       display: grid;
@@ -288,22 +288,6 @@
         border-color .5s ease,
         box-shadow   .5s ease,
         backdrop-filter .5s ease;
-    }
-    .node-bubble-disc::after {
-      content: "";
-      position: absolute;
-      inset: -2px;
-      border-radius: 50%;
-      border: 1px solid color-mix(in srgb, var(--node-color, #d4a04c) 60%, transparent);
-      opacity: 0;
-      animation: nodePulse 2.8s ease-out infinite;
-      pointer-events: none;
-    }
-    .node-bubble.is-hover .node-bubble-disc::after { animation: none; opacity: 0; }
-    @keyframes nodePulse {
-      0%   { transform: scale(.6); opacity: 0; }
-      25%  { opacity: .5; }
-      100% { transform: scale(3);  opacity: 0; }
     }
 
     .node-bubble.is-hover .node-bubble-disc {
