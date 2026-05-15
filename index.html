@@ -131,7 +131,7 @@
     }
     .hero-glyph {
       position: relative;
-      width: clamp(520px, 84vw, 1120px);
+      width: clamp(240px, 90vw, 1120px);
       aspect-ratio: 3 / 2;
       display: grid;
       place-items: center;
@@ -409,10 +409,12 @@
       border-bottom: 0.5px solid currentColor;
     }
     @media (max-width: 600px) {
-      .node-bubble { --hover-size: 220px; }
-      .node-bubble-content { padding: 20px; }
-      .node-bubble-title { font-size: 20px; }
-      .node-bubble-tagline { font-size: 11.5px; }
+      .node-bubble { --hover-size: 190px; --hit-size: 80px; }
+      .node-bubble-content { padding: 18px; gap: 3px; }
+      .node-bubble-meta { font-size: 8.5px; letter-spacing: 0.14em; }
+      .node-bubble-title { font-size: 17px; max-width: 12ch; }
+      .node-bubble-tagline { font-size: 10.5px; max-width: 18ch; margin-top: 4px; }
+      .node-bubble-cta { font-size: 9px; margin-top: 6px; }
     }
 
     .drawer-scrim {

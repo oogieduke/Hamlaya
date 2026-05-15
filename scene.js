@@ -277,6 +277,14 @@
       this.renderer.setSize(w, h, false);
       this.uniforms.u_resolution.value.set(w, h);
       this.camera.aspect = w / h;
+      // Pull the camera back on narrow viewports so the full constellation
+      // (nodes spread out to x ≈ ±2.8) stays inside the visible frustum.
+      // target_half_width / (aspect * tan(fov/2)) = required z. Clamp to a
+      // sensible range so very tall/narrow phones don't shrink it to nothing.
+      const targetHalfWidth = 3.4;
+      const halfFov = (this.camera.fov * Math.PI) / 360;
+      const required = targetHalfWidth / (this.camera.aspect * Math.tan(halfFov));
+      this.camera.position.z = Math.min(22, Math.max(6, required));
       this.camera.updateProjectionMatrix();
     }
 

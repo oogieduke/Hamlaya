@@ -285,6 +285,23 @@ function ConstellationOverlay({ scene, projects, hoveredId, onHoverChange }) {
     return m;
   }, [projects]);
 
+  // Touch devices: no hover, so tapping a node should open the menu first,
+  // and a second tap on the SAME node opens the link. Tapping anywhere
+  // else (or another node) closes the current one.
+  const isTouchDevice = React.useMemo(
+    () => typeof window !== 'undefined'
+      && window.matchMedia('(hover: none) and (pointer: coarse)').matches,
+    [],
+  );
+  React.useEffect(() => {
+    if (!isTouchDevice || !hoveredId) return undefined;
+    const onDocClick = (e) => {
+      if (!e.target.closest('.node-bubble')) onHoverChange(null);
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, [isTouchDevice, hoveredId, onHoverChange]);
+
   const openLink = (p) => {
     audio.whoosh();
     if (p.link) window.open(p.link, '_blank', 'noopener,noreferrer');
@@ -319,11 +336,19 @@ function ConstellationOverlay({ scene, projects, hoveredId, onHoverChange }) {
               style={{ '--node-color': p.color }}
               data-cursor="link"
               aria-label={`${p.title} — ${p.tagline}`}
-              onMouseEnter={() => { audio.tick(); onHoverChange(p.id); }}
-              onMouseLeave={() => onHoverChange(null)}
+              onMouseEnter={isTouchDevice ? undefined : () => { audio.tick(); onHoverChange(p.id); }}
+              onMouseLeave={isTouchDevice ? undefined : () => onHoverChange(null)}
               onFocus={() => onHoverChange(p.id)}
               onBlur={() => onHoverChange(null)}
-              onClick={() => openLink(p)}
+              onClick={(e) => {
+                if (isTouchDevice) {
+                  e.stopPropagation();
+                  if (hoveredId === p.id) openLink(p);
+                  else { audio.tick(); onHoverChange(p.id); }
+                } else {
+                  openLink(p);
+                }
+              }}
             >
               <span className="node-bubble-disc">
                 <span className="node-bubble-content">
