@@ -41,8 +41,10 @@
       font-family: var(--sans);
       font-weight: 300;
       letter-spacing: 0.01em;
-      min-height: 100vh;
-      overflow-x: hidden;
+      height: 100dvh;
+      min-height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
     }
     body { cursor: none; }
     @media (hover: none) and (pointer: coarse) { body { cursor: auto; } #cursor-dot, #cursor-ring { display: none; } }
@@ -76,10 +78,18 @@
     #root {
       position: relative;
       z-index: 1;
-      min-height: 100vh;
+      height: 100dvh;
+      min-height: 100dvh;
       padding: 28px clamp(20px, 4vw, 56px);
       display: flex;
       flex-direction: column;
+    }
+    @media (max-width: 700px) {
+      #root {
+        padding: 12px;
+        justify-content: center;
+        align-items: center;
+      }
     }
 
     .topnav {
@@ -129,6 +139,9 @@
       align-items: center;
       gap: 6px;
     }
+    @media (max-width: 700px) {
+      .hero { margin: 0; max-width: 100%; }
+    }
     .hero-glyph {
       position: relative;
       width: clamp(240px, 90vw, 1120px);
@@ -136,6 +149,9 @@
       display: grid;
       place-items: center;
       animation: glyphBreathe 10s ease-in-out 2.6s infinite both;
+    }
+    @media (max-width: 700px) {
+      .hero-glyph { width: clamp(220px, 62vw, 480px); }
     }
     [data-theme="day"] .hero-glyph { animation: glyphBreatheDay 10s ease-in-out 2.6s infinite both; }
 

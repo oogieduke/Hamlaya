@@ -191,7 +191,16 @@
         this.nodes.push({ project: p, mesh, hover: 0 });
       }
 
-      // Connecting lines — connect each node to its 2 nearest neighbours.
+      this.applyLayout();
+    }
+
+    rebuildLines() {
+      if (this.lines) {
+        this.lines.geometry.dispose();
+        this.lines.material.dispose();
+        this.constellation.remove(this.lines);
+        this.lines = null;
+      }
       const positions = [];
       const colors = [];
       const linkColor = new THREE.Color('#c9b48a');
@@ -277,15 +286,60 @@
       this.renderer.setSize(w, h, false);
       this.uniforms.u_resolution.value.set(w, h);
       this.camera.aspect = w / h;
-      // Pull the camera back on narrow viewports so the full constellation
-      // (nodes spread out to x ≈ ±2.8) stays inside the visible frustum.
-      // target_half_width / (aspect * tan(fov/2)) = required z. Clamp to a
-      // sensible range so very tall/narrow phones don't shrink it to nothing.
-      const targetHalfWidth = 3.4;
-      const halfFov = (this.camera.fov * Math.PI) / 360;
-      const required = targetHalfWidth / (this.camera.aspect * Math.tan(halfFov));
-      this.camera.position.z = Math.min(22, Math.max(6, required));
+      this.camera.position.z = 6;
       this.camera.updateProjectionMatrix();
+      this.applyLayout();
+    }
+
+    // Re-layout the constellation for the current viewport. Wide screens use
+    // the authored 3D positions; narrow screens (portrait phones, tablets)
+    // get a vertical ellipse around the centred logo so the spheres orbit
+    // the hero instead of overflowing the sides.
+    applyLayout() {
+      if (!this.nodes.length) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const isWide = w > 900;
+      if (isWide) {
+        this.nodeVisualScale = 1;
+        for (const n of this.nodes) {
+          const p = n.project;
+          n.mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
+          n.mesh.userData.basePos.copy(n.mesh.position);
+        }
+        this.rebuildLines();
+        return;
+      }
+      // Hand-tuned 5-point arrangement around the centred logo, in normalised
+      // screen-space (-1..1) relative to the viewport centre. The two side
+      // planets sit at roughly logo-height level; top and bottom planets
+      // clear above/below the logo.
+      const halfFov = (this.camera.fov * Math.PI) / 360;
+      const visHw = this.camera.aspect * Math.tan(halfFov) * 6; // world units
+      const visHh = Math.tan(halfFov) * 6;
+      const isPhone = w < 700;
+      const menuHalf = isPhone ? 92 : 140;
+      const pxMax = Math.max(60, w / 2 - menuHalf - 8);
+      const pyMax = Math.max(80, h / 2 - menuHalf - 8);
+      const layout = [
+        [ 0.00, -0.94],   // top
+        [ 0.95, -0.20],   // right
+        [ 0.58,  0.94],   // bottom-right
+        [-0.58,  0.94],   // bottom-left
+        [-0.95, -0.20],   // left
+      ];
+      for (let i = 0; i < this.nodes.length && i < layout.length; i++) {
+        const sx = layout[i][0] * pxMax;
+        const sy = layout[i][1] * pyMax;
+        const wx = (2 * sx / w) * visHw;
+        const wy = -(2 * sy / h) * visHh;
+        const z = (this.nodes[i].project.pos && this.nodes[i].project.pos[2]) || 0;
+        this.nodes[i].mesh.position.set(wx, wy, z);
+        this.nodes[i].mesh.userData.basePos.copy(this.nodes[i].mesh.position);
+      }
+      // Bump sphere size on mobile/tablet so the planets feel substantial.
+      this.nodeVisualScale = isPhone ? 2.0 : 1.4;
+      this.rebuildLines();
     }
 
     project3DToScreen(vec3, out) {
@@ -371,7 +425,7 @@
 
         const want = (hoveredId === n.project.id) ? 1 : 0;
         n.hover += (want - n.hover) * 0.12;
-        n.mesh.scale.setScalar(1 + n.hover * 0.6);
+        n.mesh.scale.setScalar((1 + n.hover * 0.6) * (this.nodeVisualScale || 1));
         n.mesh.material.uniforms.u_hover.value = n.hover;
       }
 
