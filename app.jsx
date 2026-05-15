@@ -299,9 +299,20 @@ function ConstellationOverlay({ scene, projects, hoveredId, onHoverChange }) {
         return (
           <div
             key={pos.id}
-            className="node-anchor"
-            style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` }}
+            className={`node-anchor is-ready ${isHover ? 'is-hover' : ''}`}
+            style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`, '--node-color': p.color }}
           >
+            <svg className="node-orbit" viewBox="-100 -100 200 200" aria-hidden="true">
+              <defs>
+                <path id={`orbit-${p.id}`}
+                      d="M -82,0 A 82,82 0 1,1 82,0 A 82,82 0 1,1 -82,0" />
+              </defs>
+              <text>
+                <textPath href={`#orbit-${p.id}`} startOffset="25%" textAnchor="middle">
+                  {p.title}
+                </textPath>
+              </text>
+            </svg>
             <button
               type="button"
               className={`node-bubble ${isHover ? 'is-hover' : ''}`}

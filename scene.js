@@ -98,12 +98,7 @@
       for (const n of this.nodes) {
         n.mesh.geometry.dispose();
         n.mesh.material.dispose();
-        if (n.glow) {
-          n.glow.geometry.dispose();
-          n.glow.material.dispose();
-        }
         this.constellation.remove(n.mesh);
-        if (n.glow) this.constellation.remove(n.glow);
       }
       if (this.lines) {
         this.lines.geometry.dispose();
@@ -193,46 +188,7 @@
         mesh.userData = { project: p, basePos: mesh.position.clone(), phase: Math.random() * Math.PI * 2 };
         this.constellation.add(mesh);
 
-        // Soft outer halo — back-facing fresnel sphere for the bloom-around-it look.
-        const glowGeo = new THREE.SphereGeometry(0.55 * (p.size || 1), 32, 20);
-        const glowMat = new THREE.ShaderMaterial({
-          uniforms: {
-            u_color: { value: color.clone() },
-            u_intensity: { value: 0.38 },
-            u_hover: { value: 0 },
-          },
-          vertexShader: `
-            varying vec3 vNormal;
-            varying vec3 vView;
-            void main() {
-              vNormal = normalize(normalMatrix * normal);
-              vec4 mv = modelViewMatrix * vec4(position, 1.0);
-              vView = normalize(-mv.xyz);
-              gl_Position = projectionMatrix * mv;
-            }
-          `,
-          fragmentShader: `
-            varying vec3 vNormal;
-            varying vec3 vView;
-            uniform vec3 u_color;
-            uniform float u_intensity;
-            uniform float u_hover;
-            void main() {
-              float fres = pow(1.0 - max(dot(vNormal, vView), 0.0), 3.2);
-              float a = fres * (u_intensity + u_hover * 0.55);
-              gl_FragColor = vec4(u_color * (1.0 + u_hover * 0.5), a);
-            }
-          `,
-          transparent: true,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          side: THREE.BackSide,
-        });
-        const glow = new THREE.Mesh(glowGeo, glowMat);
-        glow.position.copy(mesh.position);
-        this.constellation.add(glow);
-
-        this.nodes.push({ project: p, mesh, glow, hover: 0 });
+        this.nodes.push({ project: p, mesh, hover: 0 });
       }
 
       // Connecting lines — connect each node to its 2 nearest neighbours.
@@ -395,7 +351,7 @@
       this.constellation.rotation.x += (-tiltY - this.constellation.rotation.x) * 0.04;
       this.constellation.position.y = -this.scrollProgress * 0.8;
 
-      // Each node bobs and pulses; hover scales it up.
+      // Each node bobs; hover scales the sphere up.
       const hoveredId = this.hoveredId;
       for (const n of this.nodes) {
         const base = n.mesh.userData.basePos;
@@ -403,16 +359,11 @@
         const bob = Math.sin(t * 0.6 + ph) * 0.06;
         const sway = Math.cos(t * 0.4 + ph * 1.3) * 0.04;
         n.mesh.position.set(base.x + sway, base.y + bob, base.z);
-        n.glow.position.copy(n.mesh.position);
-
         n.mesh.material.uniforms.u_time.value = t + ph;
 
         const want = (hoveredId === n.project.id) ? 1 : 0;
         n.hover += (want - n.hover) * 0.12;
-        const s = 1 + n.hover * 0.6;
-        n.mesh.scale.setScalar(s);
-        n.glow.scale.setScalar(1 + n.hover * 0.4);
-        n.glow.material.uniforms.u_hover.value = n.hover;
+        n.mesh.scale.setScalar(1 + n.hover * 0.6);
         n.mesh.material.uniforms.u_hover.value = n.hover;
       }
 

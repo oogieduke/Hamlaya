@@ -131,7 +131,7 @@
     }
     .hero-glyph {
       position: relative;
-      width: clamp(440px, 72vw, 960px);
+      width: clamp(520px, 84vw, 1120px);
       aspect-ratio: 3 / 2;
       display: grid;
       place-items: center;
@@ -243,6 +243,37 @@
       top: 0; left: 0;
       width: 0; height: 0;
       will-change: transform;
+    }
+
+    /* Curved project title orbiting the sphere. */
+    .node-orbit {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 200px; height: 200px;
+      margin-left: -100px; margin-top: -100px;
+      pointer-events: none;
+      opacity: 0;
+      transform: rotate(0deg);
+      animation: orbitDrift 80s linear infinite;
+      transition: opacity .5s ease;
+    }
+    .node-anchor.is-ready .node-orbit { opacity: .55; }
+    .node-anchor.is-hover  .node-orbit { opacity: 0; }
+    .node-orbit text {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      fill: var(--node-color, #d4a04c);
+      filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.55));
+    }
+    @keyframes orbitDrift {
+      to { transform: rotate(360deg); }
+    }
+    @media (max-width: 600px) {
+      .node-orbit { width: 160px; height: 160px; margin-left: -80px; margin-top: -80px; }
+      .node-orbit text { font-size: 8px; letter-spacing: 0.3em; }
     }
     .node-bubble {
       --hit-size: 96px;
