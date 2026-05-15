@@ -251,8 +251,6 @@ function Hero() {
   return (
     <header className="hero">
       <div className="hero-glyph" data-cursor="link">
-        <span className="hero-glyph-ping" aria-hidden="true" />
-        <span className="hero-glyph-ping hero-glyph-ping-2" aria-hidden="true" />
         <div className="hero-glyph-follow" ref={followRef}>
           <div className="hero-glyph-mask">
             <img src="logo.png" alt="Hamlaya — mountain and moon" />

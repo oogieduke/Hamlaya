@@ -131,31 +131,13 @@
     }
     .hero-glyph {
       position: relative;
-      width: clamp(340px, 52vw, 760px);
-      height: clamp(340px, 52vw, 760px);
+      width: clamp(440px, 72vw, 960px);
+      aspect-ratio: 3 / 2;
       display: grid;
       place-items: center;
-      animation: glyphBreathe 8s ease-in-out 1.6s infinite both;
+      animation: glyphBreathe 10s ease-in-out 2.6s infinite both;
     }
-    [data-theme="day"] .hero-glyph { animation: glyphBreatheDay 8s ease-in-out 1.6s infinite both; }
-
-    .hero-glyph-ping {
-      position: absolute;
-      top: 38%; left: 50%;
-      width: 14px; height: 14px;
-      margin: -7px;
-      border-radius: 50%;
-      border: 1px solid var(--accent);
-      pointer-events: none;
-      opacity: 0;
-      animation: glyphPing 2.8s cubic-bezier(.16,.84,.3,1) 0.5s 1 both;
-    }
-    .hero-glyph-ping-2 { animation-delay: 1.1s; animation-duration: 3.2s; opacity: 0; }
-    @keyframes glyphPing {
-      0%   { transform: scale(.5); opacity: 0; }
-      15%  { opacity: .55; }
-      100% { transform: scale(46); opacity: 0; }
-    }
+    [data-theme="day"] .hero-glyph { animation: glyphBreatheDay 10s ease-in-out 2.6s infinite both; }
 
     .hero-glyph-follow {
       width: 100%; height: 100%;
@@ -166,7 +148,9 @@
     .hero-glyph-mask {
       width: 100%; height: 100%;
       display: grid; place-items: center;
-      animation: glyphReveal 1.8s cubic-bezier(.16,.84,.3,1) both;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: glyphRise 2.2s cubic-bezier(.2,.7,.2,1) 0.2s forwards;
     }
     .hero-glyph-mask img {
       width: 100%; height: 100%;
@@ -180,14 +164,13 @@
       mix-blend-mode: multiply;
       filter: brightness(1.02) contrast(1.05);
     }
-    @keyframes glyphReveal {
-      0%   { opacity: 0; clip-path: circle(0%  at 50% 38%); filter: blur(12px) brightness(.35); }
-      35%  { opacity: 1; }
-      100% { opacity: 1; clip-path: circle(120% at 50% 50%); filter: blur(0)    brightness(1.05); }
+    @keyframes glyphRise {
+      0%   { opacity: 0; transform: translateY(18px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
     @keyframes glyphBreathe {
-      0%, 100% { filter: drop-shadow(0 4px 60px rgba(212, 160, 76, 0.22)); }
-      50%      { filter: drop-shadow(0 4px 90px rgba(212, 160, 76, 0.36)); }
+      0%, 100% { filter: drop-shadow(0 4px 60px rgba(212, 160, 76, 0.18)); }
+      50%      { filter: drop-shadow(0 4px 90px rgba(212, 160, 76, 0.30)); }
     }
     @keyframes glyphBreatheDay {
       0%, 100% { filter: drop-shadow(0 4px 14px rgba(26, 28, 36, .14)); }
